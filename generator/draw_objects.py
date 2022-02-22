@@ -7,9 +7,9 @@ def createSomeImages(directory: str, log=False, step=50, from_colour=0, to_colou
     img = Image.open(path)
     pixels = img.load()
     img.close()
-    for new_r in range(0, 256, step):
-        for new_g in range(0, 256, step):
-            for new_b in range(0, 256, step):
+    for new_r in range(from_colour, to_colour, step):
+        for new_g in range(from_colour, to_colour, step):
+            for new_b in range(from_colour, to_colour, step):
                 img = Image.open(path)
                 height_img, width_img = img.size
                 idraw = ImageDraw.Draw(img)
