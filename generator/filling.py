@@ -1,13 +1,10 @@
 from PIL import Image
 from random import randint
+from merging import merge
+from drawing import colour
 
 
-'''
-@author Maxim Trofimov (@trofik00777)
-'''
-
-
-def fill(pixels, x: int, y: int, color: tuple, w: int, h: int) -> None:
+def fill(pixels, x: int, y: int, color: tuple, w: int, h: int, mask=None) -> None:
     if x < 0 or x >= w or y < 0 or y >= h:
         return
     r, g, b, alf = pixels[x, y]
@@ -24,7 +21,10 @@ def fill(pixels, x: int, y: int, color: tuple, w: int, h: int) -> None:
         alf = pixels[curr_x, curr_y][-1]
         is_top = is_bottom = False
         while alf == 0 and curr_x < w:
-            pixels[curr_x, curr_y] = color
+            if mask is None:
+                pixels[curr_x, curr_y] = color
+            else:
+                mask[curr_x, curr_y] = color
 
             if curr_y > 0:
                 curr_alf = pixels[curr_x, curr_y - 1][-1]
@@ -45,16 +45,37 @@ def fill(pixels, x: int, y: int, color: tuple, w: int, h: int) -> None:
             alf = pixels[curr_x, curr_y][-1]
 
 
-def make_fill(path: str, name_standart_pic: str, anchors: list[tuple], step=50) -> None:
-    for i in range(step):
-        img = Image.open(f"{path}/{name_standart_pic}")
-        pixels = img.load()
-        w, h = img.size
-        for anchor in anchors:
-            fill(pixels=pixels, x=anchor[0], y=anchor[1],
-                 color=(randint(0, 255), randint(0, 255), randint(0, 255), 255), w=w, h=h)
+def make_fill(path_out: str, path_standart_pic: str, anchors: list[list[tuple]], count=50, colors=None) -> None:
+    masks = [create_mask(path_standart_pic, anch) for anch in anchors]
+    for i in range(count):
+        img = Image.open(path_standart_pic)
+        if colors:
+            r, g, b = colors[randint(0, len(colors) - 1)]
+        else:
+            r, g, b = randint(0, 255), randint(0, 255), randint(0, 255)
 
-        img.save(f"{path}/{i}.png")
+        for mask in masks:
+            img = merge(img, colour(mask, (r, g, b)))
+        # for anchor in anchors:
+        #     fill(pixels=pixels, x=anchor[0], y=anchor[1],
+        #          color=(randint(0, 255), randint(0, 255), randint(0, 255), 255), w=w, h=h)
+
+        img.save(f"{path_out}/{i}.png")
+
+
+def create_mask(src, list_anchors_for_once_color: list[tuple]) -> Image:
+    if isinstance(src, str):
+        img = Image.open(src)
+    else:
+        img = src
+
+    mask = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    img_pix = img.load()
+    mask_pix = mask.load()
+    for x, y in list_anchors_for_once_color:
+        fill(pixels=img_pix, x=x, y=y, color=(255, 255, 255, 255), w=img.size[0], h=img.size[1], mask=mask_pix)
+
+    return mask
 
 
 def find_anchors(path: str) -> list[tuple]:
