@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def colour(src: str | Image, color: tuple) -> Image:
+def colour(src: str | Image.Image, color: tuple) -> Image.Image:
     if isinstance(src, str):
         img = Image.open(src)
     else:

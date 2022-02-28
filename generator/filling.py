@@ -1,14 +1,14 @@
 from PIL import Image
 from random import randint
-from merging import merge
-from drawing import colour
+from .merging import merge
+from .drawing import colour
 
 
 def fill(pixels, x: int, y: int, color: tuple, w: int, h: int, mask=None) -> None:
     if x < 0 or x >= w or y < 0 or y >= h:
         return
     r, g, b, alf = pixels[x, y]
-    if alf > 0:
+    if alf > 0 or mask is not None and mask[x, y][-1] > 0:
         return
     stack = [(x, y)]
     while len(stack) > 0:
@@ -21,9 +21,8 @@ def fill(pixels, x: int, y: int, color: tuple, w: int, h: int, mask=None) -> Non
         alf = pixels[curr_x, curr_y][-1]
         is_top = is_bottom = False
         while alf == 0 and curr_x < w:
-            if mask is None:
-                pixels[curr_x, curr_y] = color
-            else:
+            pixels[curr_x, curr_y] = color
+            if mask is not None:
                 mask[curr_x, curr_y] = color
 
             if curr_y > 0:
@@ -42,19 +41,20 @@ def fill(pixels, x: int, y: int, color: tuple, w: int, h: int, mask=None) -> Non
                     stack.append((curr_x, curr_y + 1))
 
             curr_x += 1
-            alf = pixels[curr_x, curr_y][-1]
+            if curr_x < w:
+                alf = pixels[curr_x, curr_y][-1]
 
 
 def make_fill(path_out: str, path_standart_pic: str, anchors: list[list[tuple]], count=50, colors=None) -> None:
     masks = [create_mask(path_standart_pic, anch) for anch in anchors]
     for i in range(count):
         img = Image.open(path_standart_pic)
-        if colors:
-            r, g, b = colors[randint(0, len(colors) - 1)]
-        else:
-            r, g, b = randint(0, 255), randint(0, 255), randint(0, 255)
 
         for mask in masks:
+            if colors:
+                r, g, b = colors[randint(0, len(colors) - 1)]
+            else:
+                r, g, b = randint(0, 255), randint(0, 255), randint(0, 255)
             img = merge(img, colour(mask, (r, g, b)))
         # for anchor in anchors:
         #     fill(pixels=pixels, x=anchor[0], y=anchor[1],
@@ -63,7 +63,7 @@ def make_fill(path_out: str, path_standart_pic: str, anchors: list[list[tuple]],
         img.save(f"{path_out}/{i}.png")
 
 
-def create_mask(src, list_anchors_for_once_color: list[tuple]) -> Image:
+def create_mask(src, list_anchors_for_once_color: list[tuple]) -> Image.Image:
     if isinstance(src, str):
         img = Image.open(src)
     else:
@@ -78,7 +78,7 @@ def create_mask(src, list_anchors_for_once_color: list[tuple]) -> Image:
     return mask
 
 
-def find_anchors(path: str) -> list[tuple]:
+def find_anchors(path: str) -> list[list[tuple]]:
     """Try to find anchor points. If program don't work correct use your anchor points"""
     img = Image.open(path)
     pixels = img.load()
@@ -121,15 +121,15 @@ def find_anchors(path: str) -> list[tuple]:
                 break
         else:
             continue
-        answ_anchs.append((x, y))
+        answ_anchs.append([(x, y)])
 
     return answ_anchs
 
 
 if __name__ == "__main__":
-    # make_fill(path="./images/accessories/watch", name_standart_pic="watch_circle.png", anchors=[(655, 720), (635, 735), (676, 725)])
-    # make_fill(path="./images/accessories/eyepatch", name_standart_pic="eyepatch_wired.png", anchors=[(410, 300), (490, 280), (365, 325)])
-    make_fill(path="./images/accessories/e", name_standart_pic="eyepatch_wired.png",
-              anchors=find_anchors("./images/accessories/e/eyepatch_wired.png"))
-    # print(find_anchors("./images/accessories/eyepatch/eyepatch_wired.png"))
+    # make_fill(path="./images/accessories/watch", name_standart_pic="watch.png", anchors=[(655, 720), (635, 735), (676, 725)])
+    # make_fill(path="./images/accessories/eyepatch", name_standart_pic="eyepatch.png", anchors=[(410, 300), (490, 280), (365, 325)])
+    make_fill(path="./images/accessories/e", name_standart_pic="eyepatch.png",
+              anchors=find_anchors("./images/accessories/e/eyepatch.png"))
+    # print(find_anchors("./images/accessories/eyepatch/eyepatch.png"))
 

@@ -41,13 +41,6 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_del_image">
-            <property name="text">
-             <string>del image</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QPushButton" name="pushButton_preview">
             <property name="text">
              <string>preview</string>
@@ -68,10 +61,36 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tab_2">
+      <widget class="QWidget" name="tab_accessories">
        <attribute name="title">
-        <string>Tab 2</string>
+        <string>Accessories</string>
        </attribute>
+       <widget class="QPushButton" name="pushButton_folder">
+        <property name="geometry">
+         <rect>
+          <x>250</x>
+          <y>100</y>
+          <width>131</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>select folder</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_generate">
+        <property name="geometry">
+         <rect>
+          <x>280</x>
+          <y>230</y>
+          <width>171</width>
+          <height>61</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>generate</string>
+        </property>
+       </widget>
       </widget>
      </widget>
     </item>

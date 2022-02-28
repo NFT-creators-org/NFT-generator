@@ -7,7 +7,7 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QLabel, QPushButton
 
 from AppMainWindow import Ui_MainWindow
-from generator import merging
+from generator import merging, drawing, filling
 
 
 CACHE_DIR = "cache"
@@ -28,8 +28,11 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def build_handlers(self):
         self.pushButton_add_image.clicked.connect(self.click_add_image)
-        self.pushButton_del_image.clicked.connect(self.click_del_image)
+        # self.pushButton_del_image.clicked.connect(self.click_del_image)
         self.pushButton_preview.clicked.connect(self.print_image_preview)
+
+        self.pushButton_folder.clicked.connect(self.select_folder_accessories)
+        self.pushButton_generate.clicked.connect(self.generate)
 
     @staticmethod
     def create_cache():
@@ -44,6 +47,30 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             shutil.rmtree(CACHE_DIR)
         except Exception as e:
             print(e)
+
+    def select_folder_accessories(self):
+        path_dir = QtWidgets.QFileDialog.getExistingDirectory()
+        shutil.copytree(path_dir, f"{CACHE_DIR}/accessories/")
+
+    def generate(self):
+        files = os.listdir(CACHE_DIR)
+        files.remove("accessories")
+        files.remove(self.src_preview)
+        lenf = len(files)
+        for i, file in enumerate(files):
+            new_dir = f"{CACHE_DIR}/{i}"
+            os.mkdir(new_dir)
+            drawing.generate_colours_objects_png(f"{CACHE_DIR}/{file}", new_dir, [(100, 100, 100), (255, 0, 0), (0, 255, 0), (0, 0, 255)])
+        files = os.listdir(f"{CACHE_DIR}/accessories")
+        print(files)
+        for dir in files:
+            print(dir)
+            anchors = filling.find_anchors(f"{CACHE_DIR}/accessories/{dir}/{dir}.png")
+            print(anchors)
+            filling.make_fill(f"{CACHE_DIR}/accessories/{dir}", f"{CACHE_DIR}/accessories/{dir}/{dir}.png",
+                              anchors, 10)
+        os.mkdir(f"{CACHE_DIR}/result")
+        merging.build_all(CACHE_DIR, f"{CACHE_DIR}/accessories", f"{CACHE_DIR}/result", {i: i for i in range(lenf)}, 4)
 
     def click_move_layer(self):
         direction, pos = self.sender().objectName().split("_")[1:]

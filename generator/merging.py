@@ -3,7 +3,7 @@ import os
 from random import shuffle, randint
 
 
-def merge(src1, src2, offset=(0, 0)) -> Image:
+def merge(src1, src2, offset=(0, 0)) -> Image.Image:
     if isinstance(src1, str):
         img1 = Image.open(src1)
     else:
@@ -76,5 +76,5 @@ def build_all(path: str, path_accessories: str, out_path: str, priorities: dict,
 
 if __name__ == "__main__":
     # merge_frogs("../images", "../images/NFT_result", 10)
-    a = merge("../images/accessories/eyepatch/eyepatch_wired.png", "../images/accessories/pricetag/pricetag.png")
+    a = merge("../images/accessories/eyepatch/eyepatch.png", "../images/accessories/pricetag/pricetag.png")
     a.save("tres.png")
