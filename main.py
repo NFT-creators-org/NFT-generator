@@ -3,6 +3,7 @@ import sys
 import os
 import shutil
 
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QLabel, QPushButton
 
@@ -19,7 +20,9 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # uic.loadUi('test.ui', self)
         self.setupUi(self)
         self.layers_list = dict()
+        self.accessories_list = dict()
         self.is_exist = dict()
+        self.is_exist_accessory = dict()
         AppStartWindow.create_cache()
         self.src_preview = "preview_for_app.png"
         self.print_image_preview()
@@ -30,6 +33,7 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.pushButton_add_image.clicked.connect(self.click_add_image)
         # self.pushButton_del_image.clicked.connect(self.click_del_image)
         self.pushButton_preview.clicked.connect(self.print_image_preview)
+        self.pushButton_add_accessory.clicked.connect(self.click_add_accessory)
 
         self.pushButton_folder.clicked.connect(self.select_folder_accessories)
         self.pushButton_generate.clicked.connect(self.generate)
@@ -99,39 +103,94 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.label_image_preview.setPixmap(QPixmap(f"{CACHE_DIR}/{self.src_preview}"))
 
+    def rename(self, name_img: str, dictionary: dict):
+        if name_img in dictionary:
+            dictionary[name_img] += 1
+            splitted = name_img.split(".")
+            return f"{'.'.join(splitted[:-1])}({self.is_exist[name_img]}).{splitted[-1]}"
+        else:
+            dictionary[name_img] = 0
+            return name_img
+
+    def click_add_accessory(self):
+        img_path = QtWidgets.QFileDialog.getOpenFileName()[0].rstrip("/")
+        self.add_something(self.is_exist_accessory, f"{CACHE_DIR}/accessories", self.accessories_list, [
+            (img_path.split("/")[-1], None),
+            ("edit colors", None),
+            ("choose anchors", None),
+            ("del", self.click_del_image)
+        ], self.gridLayout_accessories_list, img_path)
+
     def click_add_image(self):
         img_path = QtWidgets.QFileDialog.getOpenFileName()[0].rstrip("/")
+        self.add_something(self.is_exist, CACHE_DIR, self.layers_list, [
+            (img_path.split("/")[-1], lambda: print("click")),
+            ("up", self.click_move_layer),
+            ("down", self.click_move_layer),
+            ("del", self.click_del_image)
+        ], self.gridLayout_layers_list, img_path)
+        # img_path = QtWidgets.QFileDialog.getOpenFileName()[0].rstrip("/")
+        # name_img = img_path.split("/")[-1]
+        # print(self.gridLayout_layers_list.count())
+        # # self.gridLayout_layers_list.addWidget(QtWidgets.QLabel(text=name_img), 0, 0)
+        # if img_path:
+        #     name_img = self.rename(name_img, self.is_exist)
+        #     try:
+        #         shutil.copy(img_path, f"{CACHE_DIR}/{name_img}")
+        #     except Exception as e:
+        #         print(e)
+        #     pos = len(self.layers_list)
+        #     button_up = QPushButton("up")
+        #     button_up.setObjectName(f"pb_up_{pos}")
+        #     button_up.clicked.connect(self.click_move_layer)
+        #     self.gridLayout_layers_list.addWidget(QLabel(name_img), pos, 0)
+        #     self.gridLayout_layers_list.addWidget(button_up, pos, 1)
+        #     button_down = QPushButton("down")
+        #     button_down.setObjectName(f"pb_down_{pos}")
+        #     button_down.clicked.connect(self.click_move_layer)
+        #     self.gridLayout_layers_list.addWidget(button_down, pos, 2)
+        #     button_del = QPushButton("del")
+        #     button_del.setObjectName(f"pb_del_{pos}")
+        #     button_del.clicked.connect(self.click_del_image)
+        #     self.gridLayout_layers_list.addWidget(button_del, pos, 3)
+        #
+        #     self.layers_list[pos] = name_img
+
+    def add_something(self, dictionary: dict, path: str, list_something: dict, list_names_buttons: list[tuple],
+                      grid_layer, img_path):
+        # img_path = QtWidgets.QFileDialog.getOpenFileName()[0].rstrip("/")
         name_img = img_path.split("/")[-1]
         print(self.gridLayout_layers_list.count())
         # self.gridLayout_layers_list.addWidget(QtWidgets.QLabel(text=name_img), 0, 0)
         if img_path:
-            if name_img in self.is_exist:
-                self.is_exist[name_img] += 1
-                splitted = name_img.split(".")
-                name_img = f"{'.'.join(splitted[:-1])}({self.is_exist[name_img]}).{splitted[-1]}"
-            else:
-                self.is_exist[name_img] = 0
+            name_img = self.rename(name_img, dictionary)
             try:
-                shutil.copy(img_path, f"{CACHE_DIR}/{name_img}")
+                shutil.copy(img_path, f"{path}/{name_img}")
             except Exception as e:
                 print(e)
-            pos = len(self.layers_list)
-            button_up = QPushButton("up")
-            button_up.setObjectName(f"pb_up_{pos}")
-            button_up.clicked.connect(self.click_move_layer)
-            self.gridLayout_layers_list.addWidget(QLabel(name_img), pos, 0)
-            self.gridLayout_layers_list.addWidget(button_up, pos, 1)
-            button_down = QPushButton("down")
-            button_down.setObjectName(f"pb_down_{pos}")
-            button_down.clicked.connect(self.click_move_layer)
-            self.gridLayout_layers_list.addWidget(button_down, pos, 2)
-            button_del = QPushButton("del")
-            button_del.setObjectName(f"pb_del_{pos}")
-            button_del.clicked.connect(self.click_del_image)
-            self.gridLayout_layers_list.addWidget(button_del, pos, 3)
+            pos = len(list_something)
+            i = 0
+            for name, func in list_names_buttons:
+                button = QPushButton(name)
+                button.setObjectName(f"pb_{name}_{pos}")
+                button.clicked.connect(func)
+                grid_layer.addWidget(button, pos, i)
+                i += 1
+            # button_up = QPushButton("up")
+            # button_up.setObjectName(f"pb_up_{pos}")
+            # button_up.clicked.connect(self.click_move_layer)
+            # self.gridLayout_layers_list.addWidget(QLabel(name_img), pos, 0)
+            # self.gridLayout_layers_list.addWidget(button_up, pos, 1)
+            # button_down = QPushButton("down")
+            # button_down.setObjectName(f"pb_down_{pos}")
+            # button_down.clicked.connect(self.click_move_layer)
+            # self.gridLayout_layers_list.addWidget(button_down, pos, 2)
+            # button_del = QPushButton("del")
+            # button_del.setObjectName(f"pb_del_{pos}")
+            # button_del.clicked.connect(self.click_del_image)
+            # self.gridLayout_layers_list.addWidget(button_del, pos, 3)
 
-            self.layers_list[pos] = name_img
-
+            list_something[pos] = name_img
 
     def click_del_image(self):
         pos = int(self.sender().objectName().split("_")[-1])

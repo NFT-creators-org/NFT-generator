@@ -18,7 +18,7 @@
     <item row="0" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="build_layers">
        <attribute name="title">
@@ -65,30 +65,47 @@
        <attribute name="title">
         <string>Accessories</string>
        </attribute>
-       <widget class="QPushButton" name="pushButton_folder">
-        <property name="geometry">
-         <rect>
-          <x>250</x>
-          <y>100</y>
-          <width>131</width>
-          <height>41</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>select folder</string>
-        </property>
-       </widget>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="1" column="0">
+         <layout class="QGridLayout" name="gridLayout_accessories_list"/>
+        </item>
+        <item row="0" column="0">
+         <widget class="QPushButton" name="pushButton_add_accessory">
+          <property name="text">
+           <string>Add</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
+        <string>Page</string>
+       </attribute>
        <widget class="QPushButton" name="pushButton_generate">
         <property name="geometry">
          <rect>
-          <x>280</x>
-          <y>230</y>
+          <x>750</x>
+          <y>270</y>
           <width>171</width>
           <height>61</height>
          </rect>
         </property>
         <property name="text">
          <string>generate</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_folder">
+        <property name="geometry">
+         <rect>
+          <x>720</x>
+          <y>140</y>
+          <width>131</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>select folder</string>
         </property>
        </widget>
       </widget>
@@ -102,7 +119,7 @@
      <x>0</x>
      <y>0</y>
      <width>1440</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
