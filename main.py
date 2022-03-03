@@ -12,6 +12,7 @@ from generator import merging, drawing, filling
 
 
 CACHE_DIR = "cache"
+DEFAULT_COLORS = []
 
 
 class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -23,6 +24,7 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.accessories_list = dict()
         self.is_exist = dict()
         self.is_exist_accessory = dict()
+        self.colors_accessories = dict()
         AppStartWindow.create_cache()
         self.src_preview = "preview_for_app.png"
         self.print_image_preview()
@@ -42,6 +44,10 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def create_cache():
         try:
             os.mkdir(CACHE_DIR)
+        except Exception as e:
+            print(e)
+        try:
+            os.mkdir(f"{CACHE_DIR}/accessories")
         except Exception as e:
             print(e)
 
@@ -114,12 +120,16 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def click_add_accessory(self):
         img_path = QtWidgets.QFileDialog.getOpenFileName()[0].rstrip("/")
-        self.add_something(self.is_exist_accessory, f"{CACHE_DIR}/accessories", self.accessories_list, [
-            (img_path.split("/")[-1], None),
-            ("edit colors", None),
-            ("choose anchors", None),
-            ("del", self.click_del_image)
-        ], self.gridLayout_accessories_list, img_path)
+        try:
+            name_img = self.add_something(self.is_exist_accessory, f"{CACHE_DIR}/accessories", self.accessories_list, [
+                (img_path.split("/")[-1], lambda: print("click")),
+                ("edit colors", None),
+                ("choose anchors", None),
+                ("del", self.click_del_image)
+            ], self.gridLayout_accessories_list, img_path)
+            self.colors_accessories[name_img] = None
+        except Exception as e:
+            print(e)
 
     def click_add_image(self):
         img_path = QtWidgets.QFileDialog.getOpenFileName()[0].rstrip("/")
@@ -176,6 +186,9 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 button.clicked.connect(func)
                 grid_layer.addWidget(button, pos, i)
                 i += 1
+
+            list_something[pos] = name_img
+            return name_img
             # button_up = QPushButton("up")
             # button_up.setObjectName(f"pb_up_{pos}")
             # button_up.clicked.connect(self.click_move_layer)
@@ -190,7 +203,6 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             # button_del.clicked.connect(self.click_del_image)
             # self.gridLayout_layers_list.addWidget(button_del, pos, 3)
 
-            list_something[pos] = name_img
 
     def click_del_image(self):
         pos = int(self.sender().objectName().split("_")[-1])
