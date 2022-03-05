@@ -1,5 +1,4 @@
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtCore import QRectF
 from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtWidgets import QLabel, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsRectItem,QGraphicsPixmapItem
 

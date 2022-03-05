@@ -3,9 +3,8 @@ import sys
 import os
 import shutil
 
-from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QLabel, QPushButton, QGraphicsScene, QGraphicsPixmapItem
+from PyQt5.QtWidgets import QPushButton, QGraphicsScene, QGraphicsPixmapItem
 
 from Ui_AppMainWindow import Ui_MainWindow
 from SetupAnchors import SetupAnchors
