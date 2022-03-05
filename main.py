@@ -123,13 +123,16 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         try:
             name_img = self.add_something(self.is_exist_accessory, f"{CACHE_DIR}/accessories", self.accessories_list, [
                 (img_path.split("/")[-1], lambda: print("click")),
-                ("edit colors", None),
+                ("edit colors", self.create_edit_colors_widget),
                 ("choose anchors", None),
                 ("del", self.click_del_image)
             ], self.gridLayout_accessories_list, img_path)
             self.colors_accessories[name_img] = None
         except Exception as e:
             print(e)
+
+    def create_edit_colors_widget(self):
+        widget
 
     def click_add_image(self):
         img_path = QtWidgets.QFileDialog.getOpenFileName()[0].rstrip("/")
