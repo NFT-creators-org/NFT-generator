@@ -1,2 +1,2 @@
 CACHE_DIR = "cache"
-DEFAULT_COLORS = [(255, 0, 0), (0, 255, 0), (127, 65, 34), (123, 45, 76), (89, 83, 74), (0, 0, 255)]
+DEFAULT_COLORS = [(r, g, b) for b in range(0, 255, 50) for g in range(0, 255, 50) for r in range(0, 255, 50)]

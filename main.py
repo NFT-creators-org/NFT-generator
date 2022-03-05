@@ -5,9 +5,9 @@ import shutil
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QLabel, QPushButton
+from PyQt5.QtWidgets import QLabel, QPushButton, QGraphicsScene, QGraphicsPixmapItem
 
-from AppMainWindow import Ui_MainWindow
+from Ui_AppMainWindow import Ui_MainWindow
 from SetupAnchors import SetupAnchors
 from generator import merging, drawing, filling
 from settings_data import CACHE_DIR, DEFAULT_COLORS
@@ -44,14 +44,18 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         super().__init__()
         # uic.loadUi('test.ui', self)
         self.setupUi(self)
-        self.layers_list = dict()
-        self.accessories_list = dict()
-        self.is_exist = dict()
-        self.is_exist_accessory = dict()
-        self.accessories_data = dict()
+        self.layers_list = dict()  # {'pos at grid layout': 'name_img'}
+        self.layers_preview = dict()  # {'name_img': QGraphicsPixmapItem}
+        self.accessories_list = dict()  # {'pos at grid layout': 'name_accessory'}
+        self.is_exist = dict()  # {'name_img': 'name(int).png'}
+        self.is_exist_accessory = dict()  # {'name_accessory': 'name(int).png'}
+        self.accessories_data = dict()  # {'name': AccessoryData}
         AppStartWindow.create_cache()
         self.src_preview = "preview_for_app.png"
-        self.print_image_preview()
+        self.result_folder = "./Result"
+        self.scene_preview = QGraphicsScene()
+        self.graphicsView_preview.setScene(self.scene_preview)
+        # self.print_image_preview()
         self.build_handlers()
         self.showMaximized()
 
@@ -61,7 +65,7 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.pushButton_preview.clicked.connect(self.print_image_preview)
         self.pushButton_add_accessory.clicked.connect(self.click_add_accessory)
 
-        self.pushButton_folder.clicked.connect(self.select_folder_accessories)
+        self.pushButton_folder.clicked.connect(self.select_folder_result)
         self.pushButton_generate.clicked.connect(self.generate)
 
     @staticmethod
@@ -82,31 +86,70 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         except Exception as e:
             print(e)
 
+    def select_folder_result(self):
+        path_dir = QtWidgets.QFileDialog.getExistingDirectory()
+        self.result_folder = path_dir.rstrip("/")
+        self.label_folder_name.setText(path_dir)
+
     def select_folder_accessories(self):
         path_dir = QtWidgets.QFileDialog.getExistingDirectory()
         shutil.copytree(path_dir, f"{CACHE_DIR}/accessories/")
 
     def generate(self):
         files = os.listdir(CACHE_DIR)
-        files.remove("accessories")
-        files.remove(self.src_preview)
+        try:
+            files.remove("accessories")
+        except:
+            pass
+        try:
+            files.remove(self.src_preview)
+        except:
+            pass
         lenf = len(files)
         for i, file in enumerate(files):
             new_dir = f"{CACHE_DIR}/{i}"
-            os.mkdir(new_dir)
-            drawing.generate_colours_objects_png(f"{CACHE_DIR}/{file}", new_dir, [(100, 100, 100), (255, 0, 0), (0, 255, 0), (0, 0, 255)])
+            try:
+                os.mkdir(new_dir)
+            except:
+                pass
+            drawing.generate_colours_objects_png(f"{CACHE_DIR}/{file}", new_dir, DEFAULT_COLORS)  # bug DefaultColors
         files = os.listdir(f"{CACHE_DIR}/accessories")
         print(files)
-        for dir in files:
-            print(dir)
-            anchors = filling.find_anchors(f"{CACHE_DIR}/accessories/{dir}/{dir}.png")
-            print(anchors)
-            filling.make_fill(f"{CACHE_DIR}/accessories/{dir}", f"{CACHE_DIR}/accessories/{dir}/{dir}.png",
-                              anchors, 10)
-        os.mkdir(f"{CACHE_DIR}/result")
-        merging.build_all(CACHE_DIR, f"{CACHE_DIR}/accessories", f"{CACHE_DIR}/result", {i: i for i in range(lenf)}, 4)
+
+        num = 0
+        print(f"{self.accessories_data = }")
+        for name_img in self.accessories_data:
+            accessory = self.accessories_data[name_img]
+
+            try:
+                os.mkdir(f"{CACHE_DIR}/accessories/{num}")
+            except Exception as e:
+                print(e)
+
+            filling.make_fill(path_out=f"{CACHE_DIR}/accessories/{num}",
+                              path_standart_pic=f"{CACHE_DIR}/accessories/{name_img}",
+                              anchors=[[i] for i in accessory.anchors],
+                              count=self.spinBox_count_images.value(),
+                              colors=accessory.colors)
+            num += 1
+
+        # for dir in files:
+        #     print(dir)
+        #     anchors = filling.find_anchors(f"{CACHE_DIR}/accessories/{dir}/{dir}.png")
+        #     print(anchors)
+        #     filling.make_fill(f"{CACHE_DIR}/accessories/{dir}", f"{CACHE_DIR}/accessories/{dir}/{dir}.png",
+        #                       anchors, 10)
+        try:
+            os.mkdir(self.result_folder)
+        except:
+            pass
+        merging.build_all(CACHE_DIR, f"{CACHE_DIR}/accessories", self.result_folder,
+                          {i: i for i in range(lenf)}, self.spinBox_count_images.value())
 
     def click_move_layer(self):
+        print(self.layers_preview)
+        print(self.layers_list)
+        print(self.scene_preview)
         direction, pos = self.sender().objectName().split("_")[1:]
         k = 1 if direction == "down" else -1
         pos = int(pos)
@@ -116,14 +159,22 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             return
 
         self.layers_list[pos], self.layers_list[new_pos] = self.layers_list[new_pos], self.layers_list[pos]
+        self.replace_labels(self.gridLayout_layers_list, pos, new_pos)
 
-        self.replace_labels(pos, new_pos)
+        self.replace_zth(pos, new_pos)
 
-    def replace_labels(self, pos, new_pos):
-        text = self.gridLayout_layers_list.itemAtPosition(pos, 0).widget().text()
-        self.gridLayout_layers_list.itemAtPosition(pos, 0).widget() \
-            .setText(self.gridLayout_layers_list.itemAtPosition(new_pos, 0).widget().text())
-        self.gridLayout_layers_list.itemAtPosition(new_pos, 0).widget().setText(text)
+    def replace_zth(self, pos, new_pos):
+        name1 = self.layers_list[pos]
+        name2 = self.layers_list[new_pos]
+        z = self.layers_preview[name1].zValue()
+        self.layers_preview[name1].setZValue(self.layers_preview[name2].zValue())
+        self.layers_preview[name2].setZValue(z)
+
+    def replace_labels(self, grid_layout, pos, new_pos):
+        text = grid_layout.itemAtPosition(pos, 0).widget().text()
+        grid_layout.itemAtPosition(pos, 0).widget() \
+            .setText(grid_layout.itemAtPosition(new_pos, 0).widget().text())
+        grid_layout.itemAtPosition(new_pos, 0).widget().setText(text)
 
     def print_image_preview(self):
         merging.create_empty_layer(src=f"{CACHE_DIR}/{self.src_preview}", size=(1000, 1000))  # bug
@@ -131,7 +182,8 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         for i in range(len(layers)):
             merging.pre_merge(src1=f"{CACHE_DIR}/{self.src_preview}", src2=f"{CACHE_DIR}/{layers[i]}")
 
-        self.label_image_preview.setPixmap(QPixmap(f"{CACHE_DIR}/{self.src_preview}"))
+        self.label_image_preview.setPixmap(QPixmap(f"{CACHE_DIR}/{self.src_preview}"))  # bug
+        # self.graphicsView_preview
 
     def rename(self, name_img: str, dictionary: dict):
         if name_img in dictionary:
@@ -147,11 +199,12 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         print(self.accessories_data)
         if img_path:
             try:
-                name_img = self.add_something(self.is_exist_accessory, f"{CACHE_DIR}/accessories", self.accessories_list, [
+                name_img = self.add_something(self.is_exist_accessory, f"{CACHE_DIR}/accessories",
+                                              self.accessories_list, [
                     (img_path.split("/")[-1], lambda: print("click")),
                     ("edit colors", self.create_edit_colors_widget),
                     ("choose anchors", self.click_choose_anchors),
-                    ("del", lambda: None)
+                    ("del", self.click_del_accessory)
                 ], self.gridLayout_accessories_list, img_path)
                 self.accessories_data[name_img] = AccessoryData(name_img)
                 self.accessories_data[name_img].set_colors(DEFAULT_COLORS)
@@ -167,17 +220,24 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def click_add_image(self):
         img_path = QtWidgets.QFileDialog.getOpenFileName()[0].rstrip("/")
-        self.add_something(self.is_exist, CACHE_DIR, self.layers_list, [
-            (img_path.split("/")[-1], lambda: print("click")),
-            ("up", self.click_move_layer),
-            ("down", self.click_move_layer),
-            ("del", self.click_del_image)
-        ], self.gridLayout_layers_list, img_path)
+        if img_path:
+            name_img = self.add_something(self.is_exist, CACHE_DIR,
+                                          self.layers_list, [
+                (img_path.split("/")[-1], lambda: print("click")),
+                ("up", self.click_move_layer),
+                ("down", self.click_move_layer),
+                ("del", self.click_del_image)
+            ], self.gridLayout_layers_list, img_path)
+            pixmap = QGraphicsPixmapItem(QPixmap(img_path))
+            pixmap.setZValue(100 - len(self.layers_preview))
+            self.scene_preview.addItem(pixmap)
+            self.layers_preview[name_img] = pixmap
 
     def add_something(self, dictionary: dict, path: str, list_something: dict, list_names_buttons: list[tuple],
                       grid_layer, img_path):
         # img_path = QtWidgets.QFileDialog.getOpenFileName()[0].rstrip("/")
         name_img = img_path.split("/")[-1]
+        name_img_old = name_img
         print(self.gridLayout_layers_list.count())
         # self.gridLayout_layers_list.addWidget(QtWidgets.QLabel(text=name_img), 0, 0)
         if img_path:
@@ -189,6 +249,7 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             pos = len(list_something)
             i = 0
             for name, func in list_names_buttons:
+                name = name.replace(name_img_old, name_img)
                 button = QPushButton(name)
                 button.setObjectName(f"pb_{name}_{pos}")
                 button.clicked.connect(func)
@@ -197,6 +258,20 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             list_something[pos] = name_img
             return name_img
+
+    def click_del_accessory(self):
+        pos = int(self.sender().objectName().split("_")[-1])
+        last = len(self.accessories_list) - 1
+        for i in range(pos + 1, last + 1):
+            self.accessories_list[i - 1], self.accessories_list[i] = self.accessories_list[i], \
+                                                                     self.accessories_list[i - 1]
+            self.replace_labels(self.gridLayout_accessories_list, i - 1, i)
+
+        del self.accessories_data[self.accessories_list[last]]
+        del self.accessories_list[last]
+
+        for i in range(self.gridLayout_accessories_list.columnCount()):
+            self.gridLayout_accessories_list.itemAtPosition(last, i).widget().deleteLater()
 
     def click_choose_anchors(self):
         pos = int(self.sender().objectName().split("_")[-1])
@@ -211,10 +286,13 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         last = len(self.layers_list) - 1
         for i in range(pos + 1, last + 1):
             self.layers_list[i - 1], self.layers_list[i] = self.layers_list[i], self.layers_list[i - 1]
-            self.replace_labels(i - 1, i)
+            self.replace_labels(self.gridLayout_layers_list, i - 1, i)
+            self.replace_zth(i - 1, i)
 
+        self.scene_preview.removeItem(self.layers_preview[self.layers_list[last]])
+        del self.layers_preview[self.layers_list[last]]
         del self.layers_list[last]
-        # self.gridLayout_layers_list.removeItem(self.gridLayout_layers_list.itemAt(last))
+
         for i in range(self.gridLayout_layers_list.columnCount()):
             self.gridLayout_layers_list.itemAtPosition(last, i).widget().deleteLater()
 

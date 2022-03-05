@@ -1,6 +1,6 @@
 from PIL import Image
 import os
-from random import shuffle, randint
+from random import shuffle, randint, choice
 
 
 def merge(src1, src2, offset=(0, 0)) -> Image.Image:
@@ -41,7 +41,7 @@ def build_all(path: str, path_accessories: str, out_path: str, priorities: dict,
     # }
     path.rstrip("/")
 
-    accessories = list(os.listdir(path_accessories))
+    accessories = list(filter(lambda x: "." not in x, os.listdir(path_accessories)))
 
     parts = dict()
     keys = list(priorities.keys())
@@ -52,16 +52,22 @@ def build_all(path: str, path_accessories: str, out_path: str, priorities: dict,
 
         curr_path = f"{path}/{mode}"
         parts[mode] = os.listdir(curr_path)
-        shuffle(parts[mode])
+        # shuffle(parts[mode])
+    print(priorities)
+    print(parts)
+    print(f"{accessories = }")
+    out_path = out_path.rstrip("/")
 
-    for i in range(count):
-        img_back = Image.open(f"{path}/{priorities[keys[0]]}/{parts[priorities[keys[0]]][i]}")
+    num_pic = 0
+    for _ in range(count):
+        img_back = Image.open(f"{path}/{priorities[keys[0]]}/{choice(parts[priorities[keys[0]]])}")
         for front_i in range(1, len(keys)):
             mode = priorities[keys[front_i]]
             # img_front = Image.open(f"{path + mode}/{parts[mode][i]}")
-            img_back = merge(img_back, f"{path}/{mode}/{parts[mode][i]}")
+            img_back = merge(img_back, f"{path}/{mode}/{choice(parts[mode])}")
 
-        count_accessories = randint(0, len(accessories) - 1)
+        count_accessories = randint(0, len(accessories))
+        print(f"{count_accessories = }")
         if count_accessories > 0:
             shuffle(accessories)
 
@@ -71,7 +77,8 @@ def build_all(path: str, path_accessories: str, out_path: str, priorities: dict,
             # pix_access = Image.open(f"{path}accessories/{accessories[j]}/{pic}").load()
             merge(img_back, f"{path}/accessories/{accessories[j]}/{pic}")
 
-        img_back.save(f"{out_path.rstrip('/')}/{i}.png")
+        img_back.save(f"{out_path}/{num_pic}.png")
+        num_pic += 1
 
 
 if __name__ == "__main__":
