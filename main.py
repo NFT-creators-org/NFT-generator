@@ -8,11 +8,35 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QLabel, QPushButton
 
 from AppMainWindow import Ui_MainWindow
+from SetupAnchors import SetupAnchors
 from generator import merging, drawing, filling
+from settings_data import CACHE_DIR, DEFAULT_COLORS
+from EditColors import EditColors
 
 
-CACHE_DIR = "cache"
-DEFAULT_COLORS = []
+class AccessoryData:
+    def __init__(self, name):
+        self.name = name
+        self.colors = []
+        self.anchors = []
+
+    def set_colors(self, new_colors: list):
+        self.colors[:] = new_colors[:]
+
+    def get_colors(self):
+        return self.colors[:]
+
+    def set_anchors(self, new_anchors: list):
+        self.anchors[:] = new_anchors[:]
+
+    def get_anchors(self):
+        return self.anchors[:]
+
+    def __repr__(self):
+        return f"($name={self.name} colors={self.colors} anchors={self.anchors}$)"
+
+    def __hash__(self):
+        return hash(self.name)
 
 
 class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -24,7 +48,7 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.accessories_list = dict()
         self.is_exist = dict()
         self.is_exist_accessory = dict()
-        self.colors_accessories = dict()
+        self.accessories_data = dict()
         AppStartWindow.create_cache()
         self.src_preview = "preview_for_app.png"
         self.print_image_preview()
@@ -120,19 +144,26 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def click_add_accessory(self):
         img_path = QtWidgets.QFileDialog.getOpenFileName()[0].rstrip("/")
-        try:
-            name_img = self.add_something(self.is_exist_accessory, f"{CACHE_DIR}/accessories", self.accessories_list, [
-                (img_path.split("/")[-1], lambda: print("click")),
-                ("edit colors", self.create_edit_colors_widget),
-                ("choose anchors", None),
-                ("del", self.click_del_image)
-            ], self.gridLayout_accessories_list, img_path)
-            self.colors_accessories[name_img] = None
-        except Exception as e:
-            print(e)
+        print(self.accessories_data)
+        if img_path:
+            try:
+                name_img = self.add_something(self.is_exist_accessory, f"{CACHE_DIR}/accessories", self.accessories_list, [
+                    (img_path.split("/")[-1], lambda: print("click")),
+                    ("edit colors", self.create_edit_colors_widget),
+                    ("choose anchors", self.click_choose_anchors),
+                    ("del", lambda: None)
+                ], self.gridLayout_accessories_list, img_path)
+                self.accessories_data[name_img] = AccessoryData(name_img)
+                self.accessories_data[name_img].set_colors(DEFAULT_COLORS)
+            except Exception as e:
+                print(e)
 
     def create_edit_colors_widget(self):
-        widget
+        pos = int(self.sender().objectName().split("_")[-1])
+        name_img = self.gridLayout_accessories_list.itemAtPosition(pos, 0).widget().text()
+
+        self.widget_colors_accessories = EditColors(self, name_img)
+        self.widget_colors_accessories.show()
 
     def click_add_image(self):
         img_path = QtWidgets.QFileDialog.getOpenFileName()[0].rstrip("/")
@@ -142,32 +173,6 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             ("down", self.click_move_layer),
             ("del", self.click_del_image)
         ], self.gridLayout_layers_list, img_path)
-        # img_path = QtWidgets.QFileDialog.getOpenFileName()[0].rstrip("/")
-        # name_img = img_path.split("/")[-1]
-        # print(self.gridLayout_layers_list.count())
-        # # self.gridLayout_layers_list.addWidget(QtWidgets.QLabel(text=name_img), 0, 0)
-        # if img_path:
-        #     name_img = self.rename(name_img, self.is_exist)
-        #     try:
-        #         shutil.copy(img_path, f"{CACHE_DIR}/{name_img}")
-        #     except Exception as e:
-        #         print(e)
-        #     pos = len(self.layers_list)
-        #     button_up = QPushButton("up")
-        #     button_up.setObjectName(f"pb_up_{pos}")
-        #     button_up.clicked.connect(self.click_move_layer)
-        #     self.gridLayout_layers_list.addWidget(QLabel(name_img), pos, 0)
-        #     self.gridLayout_layers_list.addWidget(button_up, pos, 1)
-        #     button_down = QPushButton("down")
-        #     button_down.setObjectName(f"pb_down_{pos}")
-        #     button_down.clicked.connect(self.click_move_layer)
-        #     self.gridLayout_layers_list.addWidget(button_down, pos, 2)
-        #     button_del = QPushButton("del")
-        #     button_del.setObjectName(f"pb_del_{pos}")
-        #     button_del.clicked.connect(self.click_del_image)
-        #     self.gridLayout_layers_list.addWidget(button_del, pos, 3)
-        #
-        #     self.layers_list[pos] = name_img
 
     def add_something(self, dictionary: dict, path: str, list_something: dict, list_names_buttons: list[tuple],
                       grid_layer, img_path):
@@ -192,20 +197,14 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
             list_something[pos] = name_img
             return name_img
-            # button_up = QPushButton("up")
-            # button_up.setObjectName(f"pb_up_{pos}")
-            # button_up.clicked.connect(self.click_move_layer)
-            # self.gridLayout_layers_list.addWidget(QLabel(name_img), pos, 0)
-            # self.gridLayout_layers_list.addWidget(button_up, pos, 1)
-            # button_down = QPushButton("down")
-            # button_down.setObjectName(f"pb_down_{pos}")
-            # button_down.clicked.connect(self.click_move_layer)
-            # self.gridLayout_layers_list.addWidget(button_down, pos, 2)
-            # button_del = QPushButton("del")
-            # button_del.setObjectName(f"pb_del_{pos}")
-            # button_del.clicked.connect(self.click_del_image)
-            # self.gridLayout_layers_list.addWidget(button_del, pos, 3)
 
+    def click_choose_anchors(self):
+        pos = int(self.sender().objectName().split("_")[-1])
+        name_img = self.gridLayout_accessories_list.itemAtPosition(pos, 0).widget().text()
+
+        self.widget_choose_anchors = SetupAnchors(self, f"{CACHE_DIR}/accessories/{name_img}", name_img)
+
+        self.widget_choose_anchors.show()
 
     def click_del_image(self):
         pos = int(self.sender().objectName().split("_")[-1])
