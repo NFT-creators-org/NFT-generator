@@ -124,7 +124,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Generator NFT"))
         self.pushButton_add_image.setText(_translate("MainWindow", "add image"))
         self.pushButton_preview.setText(_translate("MainWindow", "preview"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.build_layers), _translate("MainWindow", "Build Layers"))
