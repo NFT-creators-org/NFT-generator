@@ -43,12 +43,16 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         super().__init__()
         # uic.loadUi('test.ui', self)
         self.setupUi(self)
+
         self.layers_list = dict()  # {'pos at grid layout': 'name_img'}
         self.layers_preview = dict()  # {'name_img': QGraphicsPixmapItem}
-        self.accessories_list = dict()  # {'pos at grid layout': 'name_accessory'}
+        self.colors_layers = dict()  # {'name': [(r, g, b), ...]}
         self.is_exist = dict()  # {'name_img': 'name(int).png'}
+
+        self.accessories_list = dict()  # {'pos at grid layout': 'name_accessory'}
         self.is_exist_accessory = dict()  # {'name_accessory': 'name(int).png'}
         self.accessories_data = dict()  # {'name': AccessoryData}
+
         AppStartWindow.create_cache()
         self.src_preview = "preview_for_app.png"
         self.result_folder = "./Result"
@@ -95,25 +99,25 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         shutil.copytree(path_dir, f"{CACHE_DIR}/accessories/")
 
     def generate(self):
-        files = os.listdir(CACHE_DIR)
-        try:
-            files.remove("accessories")
-        except:
-            pass
-        try:
-            files.remove(self.src_preview)
-        except:
-            pass
-        lenf = len(files)
-        for i, file in enumerate(files):
+        # files = os.listdir(CACHE_DIR)
+        # try:
+        #     files.remove("accessories")
+        # except:
+        #     pass
+        # try:
+        #     files.remove(self.src_preview)
+        # except:
+        #     pass
+        lenf = len(self.colors_layers)
+        for i, file in enumerate(self.colors_layers.keys()):
             new_dir = f"{CACHE_DIR}/{i}"
             try:
                 os.mkdir(new_dir)
             except:
                 pass
-            drawing.generate_colours_objects_png(f"{CACHE_DIR}/{file}", new_dir, DEFAULT_COLORS)  # bug DefaultColors
-        files = os.listdir(f"{CACHE_DIR}/accessories")
-        print(files)
+            drawing.generate_colours_objects_png(f"{CACHE_DIR}/{file}", new_dir, self.colors_layers[file])  # bug - done!
+        # files = os.listdir(f"{CACHE_DIR}/accessories")
+        # print(files)
 
         num = 0
         print(f"{self.accessories_data = }")
@@ -214,7 +218,14 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         pos = int(self.sender().objectName().split("_")[-1])
         name_img = self.gridLayout_accessories_list.itemAtPosition(pos, 0).widget().text()
 
-        self.widget_colors_accessories = EditColors(self, name_img)
+        self.widget_colors_accessories = EditColors(self, name_img, is_accessory=True)
+        self.widget_colors_accessories.show()
+
+    def edit_colors_image(self):
+        pos = int(self.sender().objectName().split("_")[-1])
+        name_img = self.gridLayout_layers_list.itemAtPosition(pos, 0).widget().text()
+
+        self.widget_colors_accessories = EditColors(self, name_img, is_accessory=False)
         self.widget_colors_accessories.show()
 
     def click_add_image(self):
@@ -225,12 +236,14 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 (img_path.split("/")[-1], lambda: print("click")),
                 ("up", self.click_move_layer),
                 ("down", self.click_move_layer),
+                ("edit colors", self.edit_colors_image),
                 ("del", self.click_del_image)
             ], self.gridLayout_layers_list, img_path)
             pixmap = QGraphicsPixmapItem(QPixmap(img_path))
             pixmap.setZValue(100 - len(self.layers_preview))
             self.scene_preview.addItem(pixmap)
             self.layers_preview[name_img] = pixmap
+            self.colors_layers[name_img] = DEFAULT_COLORS[:]
 
     def add_something(self, dictionary: dict, path: str, list_something: dict, list_names_buttons: list[tuple],
                       grid_layer, img_path):
@@ -289,6 +302,7 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.replace_zth(i - 1, i)
 
         self.scene_preview.removeItem(self.layers_preview[self.layers_list[last]])
+        del self.colors_layers[self.layers_list[last]]
         del self.layers_preview[self.layers_list[last]]
         del self.layers_list[last]
 
