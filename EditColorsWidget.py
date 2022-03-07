@@ -14,19 +14,26 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Form(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
-        Form.resize(1440, 875)
+        Form.resize(1440, 900)
         self.gridLayout = QtWidgets.QGridLayout(Form)
         self.gridLayout.setObjectName("gridLayout")
-        self.gridLayout_checkboxes_list = QtWidgets.QGridLayout()
-        self.gridLayout_checkboxes_list.setObjectName("gridLayout_checkboxes_list")
-        self.gridLayout.addLayout(self.gridLayout_checkboxes_list, 0, 0, 1, 1)
+        self.scrollArea = QtWidgets.QScrollArea(Form)
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setObjectName("scrollArea")
+        self.scrollAreaWidgetContents_checkboxes_list = QtWidgets.QWidget()
+        self.scrollAreaWidgetContents_checkboxes_list.setGeometry(QtCore.QRect(0, 0, 1414, 874))
+        self.scrollAreaWidgetContents_checkboxes_list.setObjectName("scrollAreaWidgetContents_checkboxes_list")
+        self.gridLayout_2 = QtWidgets.QGridLayout(self.scrollAreaWidgetContents_checkboxes_list)
+        self.gridLayout_2.setObjectName("gridLayout_2")
+        self.scrollArea.setWidget(self.scrollAreaWidgetContents_checkboxes_list)
+        self.gridLayout.addWidget(self.scrollArea, 0, 0, 1, 1)
 
         self.retranslateUi(Form)
         QtCore.QMetaObject.connectSlotsByName(Form)
 
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
-        Form.setWindowTitle(_translate("Form", "Form"))
+        Form.setWindowTitle(_translate("Form", "Edit Colors"))
 
 
 if __name__ == "__main__":

@@ -24,7 +24,7 @@ class EditColors(QtWidgets.QWidget, Ui_Form):
                 checkbox.setObjectName(f"checkbox_{i}")
                 checkbox.clicked.connect(self.click_checkbox)
                 checkbox.setChecked(flag)
-                self.gridLayout_checkboxes_list.addWidget(checkbox, i, 0)
+                self.gridLayout_2.addWidget(checkbox, i, 0)
         except Exception as e:
             print(e)
 
