@@ -65,7 +65,7 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def build_handlers(self):
         self.pushButton_add_image.clicked.connect(self.click_add_image)
         # self.pushButton_del_image.clicked.connect(self.click_del_image)
-        self.pushButton_preview.clicked.connect(self.print_image_preview)
+        # self.pushButton_preview.clicked.connect(self.print_image_preview)
         self.pushButton_add_accessory.clicked.connect(self.click_add_accessory)
 
         self.pushButton_folder.clicked.connect(self.select_folder_result)

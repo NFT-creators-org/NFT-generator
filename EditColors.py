@@ -1,4 +1,5 @@
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QCheckBox
 
 from EditColorsWidget import Ui_Form
@@ -21,6 +22,13 @@ class EditColors(QtWidgets.QWidget, Ui_Form):
             for i in sorted(self.colors):
                 color, flag = self.colors[i]
                 checkbox = QCheckBox(f"R:{color[0]} G:{color[1]} B:{color[2]}")
+                checkbox.setStyleSheet(f"font: 10pt; color: rgb({color[0]}, {color[1]}, {color[2]});")
+
+                effect = QtWidgets.QGraphicsDropShadowEffect(self)
+                effect.setOffset(-.5, -.5)
+                effect.setColor(QColor(0, 0, 0))
+                # checkbox.setGraphicsEffect(effect)
+
                 checkbox.setObjectName(f"checkbox_{i}")
                 checkbox.clicked.connect(self.click_checkbox)
                 checkbox.setChecked(flag)
