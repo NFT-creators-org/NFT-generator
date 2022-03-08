@@ -32,3 +32,9 @@ Example of choosing an anchors (red points at the picture)
 Example of choosing a generate options
 
 ![pic3](forReadme/screen_generate.png)
+
+## Result
+
+A collection of images is generated in the specified folder
+
+![pic4](forReadme/ResultGenerated.jpg)
