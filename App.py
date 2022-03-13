@@ -1,8 +1,10 @@
-from PyQt5 import QtWidgets
 import sys
 import os
 import shutil
+import time
+from multiprocessing import Process
 
+from PyQt5 import QtWidgets
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QPushButton, QGraphicsScene, QGraphicsPixmapItem
 
@@ -99,28 +101,30 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         shutil.copytree(path_dir, f"{CACHE_DIR}/accessories/")
 
     def generate(self):
-        # files = os.listdir(CACHE_DIR)
-        # try:
-        #     files.remove("accessories")
-        # except:
-        #     pass
-        # try:
-        #     files.remove(self.src_preview)
-        # except:
-        #     pass
+        time_start = time.time()
         lenf = len(self.colors_layers)
+        processes = []
         for i, file in enumerate(self.colors_layers.keys()):
             new_dir = f"{CACHE_DIR}/{i}"
             try:
                 os.mkdir(new_dir)
             except:
                 pass
-            drawing.generate_colours_objects_png(f"{CACHE_DIR}/{file}", new_dir, self.colors_layers[file])  # bug - done!
-        # files = os.listdir(f"{CACHE_DIR}/accessories")
-        # print(files)
+            processes.append(Process(target=drawing.generate_colours_objects_png,
+                                args=(f"{CACHE_DIR}/{file}", new_dir, self.colors_layers[file])))
+            # drawing.generate_colours_objects_png(f"{CACHE_DIR}/{file}", new_dir, self.colors_layers[file])  # bug - done!
+
+        for i in processes:
+            i.start()
+        for i in processes:
+            i.join()
+
+        time_finish = time.time()
+        print("proc gen col: %s", (time_finish - time_start))
 
         num = 0
         print(f"{self.accessories_data = }")
+        processes = []
         for name_img in self.accessories_data:
             accessory = self.accessories_data[name_img]
 
@@ -129,12 +133,19 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             except Exception as e:
                 print(e)
 
-            filling.make_fill(path_out=f"{CACHE_DIR}/accessories/{num}",
-                              path_standart_pic=f"{CACHE_DIR}/accessories/{name_img}",
-                              anchors=[[i] for i in accessory.anchors],
-                              count=self.spinBox_count_images.value(),
-                              colors=accessory.colors)
+            processes.append(Process(target=filling.make_fill,
+                                args=(f"{CACHE_DIR}/accessories/{num}",
+                                      f"{CACHE_DIR}/accessories/{name_img}",
+                                      [[i] for i in accessory.anchors],
+                                      self.spinBox_count_images.value(),
+                                      accessory.colors)))
             num += 1
+
+            # filling.make_fill(path_out=f"{CACHE_DIR}/accessories/{num}",
+            #                   path_standart_pic=f"{CACHE_DIR}/accessories/{name_img}",
+            #                   anchors=[[i] for i in accessory.anchors],
+            #                   count=self.spinBox_count_images.value(),
+            #                   colors=accessory.colors)
 
         # for dir in files:
         #     print(dir)
@@ -142,12 +153,24 @@ class AppStartWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         #     print(anchors)
         #     filling.make_fill(f"{CACHE_DIR}/accessories/{dir}", f"{CACHE_DIR}/accessories/{dir}/{dir}.png",
         #                       anchors, 10)
+
+        for i in processes:
+            i.start()
+        for i in processes:
+            i.join()
+
+        time_finish = time.time()
+        print("proc mak fil: %s", (time_finish - time_start))
+
         try:
             os.mkdir(self.result_folder)
         except:
             pass
         merging.build_all(CACHE_DIR, f"{CACHE_DIR}/accessories", self.result_folder,
                           {i: i for i in range(lenf)}, self.spinBox_count_images.value())
+
+        time_finish = time.time()
+        print("process time: %s" % (time_finish - time_start))
 
     def click_move_layer(self):
         print(self.layers_preview)
